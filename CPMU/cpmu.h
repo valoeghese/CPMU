@@ -71,6 +71,23 @@ static inline void CMPULocalCleanup(const struct cmpu_allocated_pointers* alloca
 
 #define returndynamic(X)
 #define fetchdynamic(X)
-#define createdynamic(X)
+
+// Create an object and allocates a reference counter for it in the current local scope.
+// This macro also creates the variable.
+// TODO better solution than exit for out-of-memory. Perhaps force someone to declare an OOM handler.
+#define createdynamic(TYPE, VAR_NAME)\
+	TYPE* VAR_NAME = calloc(1, sizeof(TYPE));\
+	if (!VAR_NAME) exit(-1); \
+	struct cmpu_reference_counted* _cmpu_ref_##VAR_NAME = malloc(sizeof(struct cmpu_reference_counted)); \
+	if (!_cmpu_ref_##VAR_NAME) exit(-1); \
+	_cmpu_ref_##VAR_NAME->ptr = VAR_NAME; \
+	_cmpu_ref_##VAR_NAME->refCount = 1; \
+	_cmpu_ref_##VAR_NAME->destructor = NULL; \
+	{\
+		struct cmpu_allocated_pointers* cmpu_last_allocated_pointer = _cmpu_local_scope; \
+		_cmpu_local_scope = malloc(sizeof(struct cmpu_allocated_pointers)); \
+		_cmpu_local_scope->next = cmpu_last_allocated_pointer;\
+		_cmpu_local_scope->ptr = _cmpu_ref_##VAR_NAME;\
+	}
 
 #endif CMPU_INCLUDED

@@ -6,4 +6,6 @@
 int main(int argc, char* argv[]) dynamicheap
 (
 	printf("Hello, World!\n");
+
+	createdynamic(int, a);
 )
