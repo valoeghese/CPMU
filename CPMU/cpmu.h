@@ -69,8 +69,18 @@ static inline void CPMULocalCleanup(const struct cpmu_allocated_pointers* alloca
 	CPMULocalCleanup(_cpmu_local_scope);\
 }
 
-#define returndynamic(X)
-#define fetchdynamic(X)
+// Returns the given value without any dynamic-heap pointer management stuff on it, but runs cleanup first.
+// Use instead of a regular 'return' in a dynamicheap block.
+#define returnstatic(X) CPMULocalCleanup(_cpmu_local_scope); return X
+
+// Returns a pointer to the reference counter for the given object.
+// Increments the reference count by one before cleanup for the variable being returned.
+#define returndynamic(VAR_NAME) _cpmu_ref_##VAR_NAME->refCount++; CPMULocalCleanup(_cpmu_local_scope); return _cpmu_ref_##VAR_NAME
+
+// Handles receiving a return value from a method that returns a pointer to a reference counter.
+// Including adding to the local scope, and creating a variable for the pointer itself.
+// Also properly avoids such things if the value is NULL.
+#define fetchdynamic(TYPE, VAR_NAME)
 
 // Create an object and allocates a reference counter for it in the current local scope.
 // This macro also creates the variable.
